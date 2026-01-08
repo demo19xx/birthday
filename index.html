@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="UTF-8">
+<title>Happy Birthday</title>
+
+<link rel="stylesheet" href="./file/default.css">
+
+<script src="./file/jquery.min.js"></script>
+<script src="./file/jscex.min.js"></script>
+<script src="./file/jscex-parser.js"></script>
+<script src="./file/jscex-jit.js"></script>
+<script src="./file/jscex-builderbase.min.js"></script>
+<script src="./file/jscex-async.min.js"></script>
+<script src="./file/jscex-async-powerpack.min.js"></script>
+<script src="./file/functions.js"></script>
+<script src="./file/love.js"></script>
+
+<style>
+/* ===== COUNTDOWN ===== */
+#countdown {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+#count {
+  font-size: 120px;
+  color: #fff;
+  font-weight: bold;
+  animation: zoom 1s infinite;
+}
+@keyframes zoom {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(1.5); opacity: 0.3; }
+}
+
+/* ===== BALLOONS ===== */
+.balloons span {
+  position: fixed;
+  bottom: -100px;
+  width: 40px;
+  height: 50px;
+  border-radius: 50%;
+  animation: fly linear infinite;
+  opacity: 0.8;
+  z-index: 0;
+}
+@keyframes fly {
+  from { transform: translateY(0) rotate(0); }
+  to { transform: translateY(-120vh) rotate(360deg); }
+}
+</style>
+</head>
+
+<body>
+
+<!-- COUNTDOWN -->
+<div id="countdown">
+  <span id="count">3</span>
+</div>
+
+<!-- BALLOONS -->
+<div class="balloons"></div>
+
+<audio autoplay id="myAudio">
+  <source src="aud.mp3" type="audio/mp3">
+</audio>
+
+<div id="main">
+  <div id="wrap">
+    <div id="text">
+      <div id="code">
+        <span class="say">Chúc mừng sinh nhật Ngọc Hiển 🎉</span><br>
+        <span class="say">Chúc bạn có một ngày tuyệt vời 💫</span><br>
+        <span class="say">Chúc bạn luôn may mắn, thành công 🌸</span><br>
+        <span class="say">Chúc bạn luôn vui vẻ, hạnh phúc ❤️</span><br>
+        <span class="say">Chúc bạn luôn tràn đầy năng lượng 😊</span>
+      </div>
+    </div>
+    <canvas id="canvas" width="1100" height="680"></canvas>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  /* ===== COUNTDOWN ===== */
+  let counter = 3;
+  const countEl = document.getElementById("count");
+  const countdownBox = document.getElementById("countdown");
+
+  function startCountdown(callback) {
+    const timer = setInterval(() => {
+      counter--;
+      if (counter > 0) {
+        countEl.innerText = counter;
+      } else {
+        clearInterval(timer);
+        countdownBox.style.display = "none";
+        callback();
+      }
+    }, 1000);
+  }
+
+  /* ===== BALLOONS ===== */
+  const balloonBox = document.querySelector(".balloons");
+  for (let i = 0; i < 18; i++) {
+    const b = document.createElement("span");
+    b.style.left = Math.random() * 100 + "vw";
+    b.style.animationDuration = 6 + Math.random() * 6 + "s";
+    b.style.background = `hsl(${Math.random() * 360},80%,60%)`;
+    balloonBox.appendChild(b);
+  }
+
+  /* ===== TREE ANIMATION (GỐC 100%) ===== */
+  startCountdown(function () {
+
+    (function () {
+
+      var canvas = $("#canvas");
+      var width = canvas.width();
+      var height = canvas.height();
+
+      var opts = {
+        seed: { x: width / 2 - 20, color: "rgb(190,26,37)", scale: 2 },
+        branch: [
+          [535,680,570,250,500,200,30,100,[
+            [540,500,455,417,340,400,13,100,[[450,435,434,430,394,395,2,40]]],
+            [550,445,600,356,680,345,12,100,[[578,400,648,409,661,426,3,80]]],
+            [539,281,537,248,534,217,3,40],
+            [546,397,413,247,328,244,9,80,[
+              [427,286,383,253,371,205,2,40],
+              [498,345,435,315,395,330,4,60]
+            ]],
+            [546,357,608,252,678,221,6,100,[[590,293,646,277,648,271,2,80]]]
+          ]]
+        ],
+        bloom: { num: 1200, width: 1080, height: 650 },
+        footer: { width: 1200, height: 5, speed: 10 }
+      };
+
+      var tree = new Tree(canvas[0], width, height, opts);
+      var seed = tree.seed;
+      var foot = tree.footer;
+      var hold = 1;
+
+      canvas.click(function () {
+        document.getElementById("myAudio").play();
+        hold = 0;
+      });
+
+      var seedAnimate = eval(Jscex.compile("async", function () {
+        seed.draw();
+        while (hold) { $await(Jscex.Async.sleep(10)); }
+        while (seed.canScale()) {
+          seed.scale(0.95);
+          $await(Jscex.Async.sleep(10));
+        }
+        while (seed.canMove()) {
+          seed.move(0, 2);
+          foot.draw();
+          $await(Jscex.Async.sleep(10));
+        }
+      }));
+
+      var growAnimate = eval(Jscex.compile("async", function () {
+        do {
+          tree.grow();
+          $await(Jscex.Async.sleep(10));
+        } while (tree.canGrow());
+      }));
+
+      var flowAnimate = eval(Jscex.compile("async", function () {
+        do {
+          tree.flower(2);
+          $await(Jscex.Async.sleep(10));
+        } while (tree.canFlower());
+      }));
+      var moveAnimate = eval(Jscex.compile("async", function () {
+      tree.snapshot("p1", 240, 0, 610, 680);
+
+      while (tree.move("p1", 500, 0)) {   // 👈 dịch sang phải
+      foot.draw();
+      $await(Jscex.Async.sleep(10));
+    }
+
+    foot.draw();
+    tree.snapshot("p2", 500, 0, 610, 680);
+
+    canvas.parent().css(
+    "background",
+    "url(" + tree.toDataURL("image/png") + ")"
+  );
+  canvas.css("background", "#ffe");
+
+  $await(Jscex.Async.sleep(300));
+  canvas.css("background", "none");
+}));
+
+      var textAnimate = eval(Jscex.compile("async", function () {
+        $("#code").show().typewriter();
+      }));
+
+      var runAsync = eval(Jscex.compile("async", function () {
+        $await(seedAnimate());
+        $await(growAnimate());
+        $await(flowAnimate());
+        $await(moveAnimate()); 
+        textAnimate().start();
+      }));
+
+      runAsync().start();
+
+    })();
+  });
+});
+</script>
+
+</body>
+</html>
